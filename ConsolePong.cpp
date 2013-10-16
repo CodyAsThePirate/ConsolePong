@@ -1,47 +1,50 @@
 //***********************************************************************************************************//
-//	GR_03_Project_Pong.cpp							  v.1.2								   Datum: 31.12.2010 //
-//	ConsolePong.cpp									  v.1.3								   Datum: 16.10.2013 //
-//																	                                         //
-//									    Pong - The Mother of all videogames  					             //
-//																	                                         //
-//										   A project of Simon Neuberger									     //
-//											    @CodyAsThePirate											 //
-//																	                                         //
-//	Dieses Spiel ist dem klassischen Pong nachempfunden. Es ist zu zweit zu spielen - Spieler gegen Spieler. //
-//	Man die Wahl zwischen zwei Zählweisen: 3 Sätze jeweils bis 11 oder ein einfaches Spiel bis 11. Auch muss //
-//	vor Spielbeginn die Schwierigkeitsstufe festgelegt werden, sprich die Ballgeschwindigkeit. Zusätzlich    //
-//	besteht die Möglichkeit einer Kurzen Pause, in der Ball aber einfach nur langsamer wird (10000ms). Bei   //
-//	Matchsieg eines Spielers wird eine Kurze Gewinnanzeigeseite gezeigt und das Spiel beginnt von vorne mit	 //
-//	den Auswahlmöglichenkeiten. Sobald der Ball auf Spielrand oder Schläger trifft ertönnt ein Aufprallpong  //
+//  The MIT License (MIT) Copyright                                                 (c) 2013 Simon Neuberger //
+//  GR_03_Project_Pong.cpp                            v.1.2                                Datum: 31.12.2010 //
+//  ConsolePong.cpp                                   v.1.3                                Datum: 16.10.2013 //
+//                                                                                                           //
+//                                      Pong - The Mother of all videogames                                  //
+//                                                                                                           //
+//                                       A project of Simon Neuberger                                        //
+//                                              @CodyAsThePirate                                             //
+//                                                                                                           //
+//  Dieses Spiel ist dem klassischen Pong nachempfunden. Es ist zu zweit zu spielen - Spieler gegen Spieler. //
+//  Man die Wahl zwischen zwei Zählweisen: 3 Sätze jeweils bis 11 oder ein einfaches Spiel bis 11. Auch muss //
+//  vor Spielbeginn die Schwierigkeitsstufe festgelegt werden, sprich die Ballgeschwindigkeit. Zusätzlich    //
+//  besteht die Möglichkeit einer Kurzen Pause, in der Ball aber einfach nur langsamer wird (10000ms). Bei   //
+//  Matchsieg eines Spielers wird eine Kurze Gewinnanzeigeseite gezeigt und das Spiel beginnt von vorne mit  //
+//  den Auswahlmöglichenkeiten. Sobald der Ball auf Spielrand oder Schläger trifft ertönnt ein Aufprallpong  //
 //  -sound sowie bei Sieg ein Jubelsound. (Alle verwendeten Sounds stammen von © Bao Loc Nguyen Van)         //
 //                                                                                                           //
 //***********************************************************************************************************//
 
 #include <conio.h>
 #include <stdio.h>
-#include <windows.h>								// FÜR WinApi FUNKTIONEN
-#include <stdlib.h>									// ENTHÄLT system(...)
+#include <windows.h>                    // FÜR WinApi FUNKTIONEN
+#include <stdlib.h>                     // ENTHÄLT system(...)
 #include <process.h>
-#pragma comment(lib, "winmm.lib")					// DIESE BIB MUSS GELINKT WERDEN, DAMIT PlaySoundA(...) FUNDKTIONIERT
-#include <mmsystem.h>								// FÜR PlaySoundA(...)
+#pragma comment(lib, "winmm.lib")       // DIESE BIB MUSS GELINKT WERDEN, DAMIT PlaySoundA(...) FUNDKTIONIERT
+#include <mmsystem.h>                   // FÜR PlaySoundA(...)
 
-#define YVALUE 21	        // MEHRERE MAKROS UM DIE GRÖ?E  ACHTUNG: DER YVALUE MUSS IMMER UNGERADE SEIN! SONST GIBT ES KEINE playingFieldMITTE!
-#define XVALUE 46	        // DES playingFieldES GANZ SCHNELL
-#define XMIDDLE (XVALUE/2)-1	// SCHNELL UND EINFACH NACH
-#define YMIDDLE (YVALUE/2)	// BELIEBEN ZU ÄNDERN; ALLES PASST SICH AUTOMATISCH AN!
+#define YVALUE 21              // MEHRERE MAKROS UM DIE GRÖ?E  ACHTUNG: DER YVALUE MUSS IMMER UNGERADE SEIN! SONST GIBT ES KEINE playingFieldMITTE!
+#define XVALUE 46              // DES playingFieldES GANZ SCHNELL
+#define XMIDDLE (XVALUE/2)-1   // SCHNELL UND EINFACH NACH
+#define YMIDDLE (YVALUE/2)     // BELIEBEN ZU ÄNDERN; ALLES PASST SICH AUTOMATISCH AN!
 
 int playermove(int);
 int ballmove(int, int*, int*);
 int field(int,char, char*, char*,int,int);
 int screen(void);
-										 // MEHR ALS EINE FUNKTION ARBEITET MIT DEM playingField! NATÜRLICH AUCH IN DER MAIN INITIALISIERBAR UND DANN MIT 
-char playingField[YVALUE][XVALUE]={0};		 // EINEM ZEIGER ALS PARAMTER DEN FUNKTIONEN ÜBERGEBEN; JEDOCH WIRD ZAHL DER PARAMETER IRGENDWANN EINFACH UNÜBERSICHTLICH
+
+// MEHR ALS EINE FUNKTION ARBEITET MIT DEM playingField! NATÜRLICH AUCH IN DER MAIN INITIALISIERBAR UND DANN MIT
+// EINEM ZEIGER ALS PARAMTER DEN FUNKTIONEN ÜBERGEBEN; JEDOCH WIRD ZAHL DER PARAMETER IRGENDWANN EINFACH UNÜBERSICHTLICH
+char playingField[YVALUE][XVALUE]={0};
 
 // HAUPTFUNKTION; MOTOR DES GAMES
 int main(void){
 	int xBall=0, weiter=0, close=1, control=1, config=1, speed=0, count1=0, count2=0, satz1=0, satz2=0; // GAMESTEUREUNGSVARIABLEN
-	int direction=0, upDown=0;					 // BALLRICHTUNG STEUERUNGSVARIABLEN
-	int *d=&direction, *uD=&upDown;				 // UND DEREN ZEIGER; STATT GLOBALE VARIABLEN
+	int direction=0, upDown=0;              // BALLRICHTUNG STEUERUNGSVARIABLEN
+	int *d=&direction, *uD=&upDown;         // UND DEREN ZEIGER; STATT GLOBALE VARIABLEN
 	char start, modus='0', linekiller=' ', counter1[6]={"     "}, counter2[6]={"     "};
 	screen(); // MUSS NICH SEIN; SIEHT ABER SCHÖNER AUS!!
 	
@@ -51,7 +54,8 @@ int main(void){
 		field(control, modus, counter1, counter2, count1, count2);       // AUSGABE DES GAME AUSGANGSLAGE
 
 		// SPIELEINSTELLUNGEN
-		if(config==1){								// NUR BEI MATCH-BEGINN ABFRAGE DER SPIELSCHWIERIGKEIT UND DES SPIELMODUS
+		// NUR BEI MATCH-BEGINN ABFRAGE DER SPIELSCHWIERIGKEIT UND DES SPIELMODUS
+		if(config==1){
 			config=0; printf_s("\n\n");
 			do{
 				printf_s("Difficulty: very easy[1] %c easy[2] %c normal[3] %c hard[4] %c impossible[5] --> ",16,16,16,16); modus=_getche();
@@ -60,7 +64,7 @@ int main(void){
 				if(modus=='3')speed=50;
 				if(modus=='4')speed=23;
 				if(modus=='5')speed=0;
-				printf_s("\r \r");									  // SPRINGT AN ANFANG VON LETZTE ZEILE
+				printf_s("\r \r");          // NUR BEI MATCH-BEGINN ABFRAGE DER SPIELSCHWIERIGKEIT UND DES SPIELMODUS// SPRINGT AN ANFANG VON LETZTE ZEILE
 			}while (modus!='1' && modus!='2' && modus!='3' && modus!='4' && modus!='5'); // FÄNGT GEDRÜCKTE TASTEN WÄHREND DES SPIELS AB -> ANSONSTEN modus getch() WÜRDE IRGENDWAS EINLESEN
 			for(int i=0; i<=80; i++)printf_s("\r%*c",i,linekiller);     // LETZTE ZEILE LÖSCHEN	
 
@@ -81,38 +85,63 @@ int main(void){
 			control=-1; direction=1; upDown=0;  // control REGELT VORGÄNGE IN field() UND playermove(); direction KOORDINIERT DIE BALLRICHTUNGEN in ballmove()
 
 			// SPIELVERLAUF
-			for(xBall=XMIDDLE+1; xBall<XVALUE-2 && xBall>3; xBall++){ // EINE RUNDE LÄUFT SO LANGE BIS DER LINKE ODER RECHTE SPIELRAND ERREICHT WURDE
+			// EINE RUNDE LÄUFT SO LANGE BIS DER LINKE ODER RECHTE SPIELRAND ERREICHT WURDE
+			for(xBall=XMIDDLE+1; xBall<XVALUE-2 && xBall>3; xBall++){
 				Sleep(speed); // DAS MUSS REIN! COMPILER DEBUGGING IST OFT NICHT ORIGINAL SPEED! exe-DATEI OFFENBART DEN WAHREN SPEED!!
-				if(GetAsyncKeyState(0x42)||weiter==1){							// PAUSE
+				// PAUSE
+				if(GetAsyncKeyState(0x42)||weiter==1){
 					if(modus=='7')printf_s("\n\n\nKURZE Pause!! Ball bewegt sich nur langsamer! Wenn r dann Konzentration! ^^");
 					if(modus=='6')printf_s("KURZE Pause!! Ball bewegt sich nur langsamer! Wenn r dann Konzentration! ^^");
 					weiter=1;Sleep(10000);}
-				if(GetAsyncKeyState(0x52)){										// PAUSE WIRD AUFGEHOBEN
+				// PAUSE WIRD AUFGEHOBEN
+				if(GetAsyncKeyState(0x52)){
 					weiter=0;Sleep(speed);
-					if(modus=='7')printf_s("\r \r");for(int i=0; i<=80; i++)printf_s("\r%*c",i,linekiller);} // LöSCHEN DER PAUSEINFO							
-				if(GetAsyncKeyState(0x4E)){										// NEUES MATCH
-					for(int i=0; i<=4; i++){counter2[i]=' '; counter1[i]=' ';}  // ZURÜCKSETZTEN ALLER GAMEVARIABLEN
-					count1=-1; count2=-1; config=1; satz1=0; satz2=0; modus='0'; break;}	
-				if(GetAsyncKeyState(0x43)){close=0;break;}					// GAME WIRD GESCHLOSSEN
-                // FüR BALLVERLAUF IN X-RICHTUNG
+					if(modus=='7')printf_s("\r \r");
+						for(int i=0; i<=80; i++)
+							printf_s("\r%*c",i,linekiller);} // LöSCHEN DER PAUSEINFO
+				// NEUES MATCH
+				if(GetAsyncKeyState(0x4E)){
+					// ZURÜCKSETZTEN ALLER GAMEVARIABLEN
+					for(int i=0; i<=4; i++){
+						counter2[i]=' ';
+						counter1[i]=' ';
+					}
+					count1=-1; count2=-1; config=1; satz1=0; satz2=0; modus='0';
+					break;
+				}
+				// GAME WIRD GESCHLOSSEN
+				if(GetAsyncKeyState(0x43)){
+					close=0;
+					break;
+				}
+				// FüR BALLVERLAUF IN X-RICHTUNG
 				if(direction==1||direction==2||direction==3){
 					ballmove(xBall, d, uD);      // BEWEGUNG DES BALLES
-					playermove(control);		   // BEWEGUNG DER SPIELER
-					field(control, modus, counter1, counter2, count1, count2);}
+					playermove(control);         // BEWEGUNG DER SPIELER
+					field(control, modus, counter1, counter2, count1, count2);
+				}
 				
 				// FÜR BALLVERLAUF IN -X RICHTUNG
 				if(direction==-1||direction==-2||direction==-3){
 					xBall-=2;
 					ballmove(xBall, d, uD);      // BEWEGUNG DES BALLES
-					playermove(control);		   // BEWEGUNG DER SPIELER
-					field(control, modus, counter1, counter2, count1, count2);}
+					playermove(control);         // BEWEGUNG DER SPIELER
+					field(control, modus, counter1, counter2, count1, count2);
+				}
 			control=0;
 			}
 
 			//SPIELSTÄNDE
-			if(modus=='6'){																			// 3 SÄTZE BIS 5
-				if(xBall>XVALUE-5&&count1<5&&config==0){count1++; if(count1<4)counter1[count1]=1;}	//	SPIELSTAND
-				if(xBall<4&&count2<5&&config==0){count2++; if(count2<4)counter2[count2]=1;}			//
+			// 3 SÄTZE BIS 5
+			if(modus=='6'){
+				// SPIELSTAND
+				if(xBall>XVALUE-5 && count1<5 && config==0){
+					count1++;
+					if(count1<4)
+						counter1[count1]=1;
+				}
+
+				if(xBall<4 && count2<5 && config==0){count2++; if(count2<4)counter2[count2]=1;}			//
 				field(control, modus, counter1, counter2, count1, count2);						// field() MUSS AUFGERUFEN WERDEN; DAMIT ES
 				if(count1==4||count2==4){															// DIE LETZTEN COUNTER-WERTE NOCH MITBEKOMMT
 					if(count1==4)satz1++;															// BEVOR SIE GELÖSCHT WERDEN!!
